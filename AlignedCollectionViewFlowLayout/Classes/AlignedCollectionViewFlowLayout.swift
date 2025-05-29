@@ -232,15 +232,48 @@ open class AlignedCollectionViewFlowLayout: UICollectionViewFlowLayout {
         })
         return layoutAttributesObjects
     }
-    
+
+    open override func layoutAttributesForSupplementaryView(
+        ofKind elementKind: String,
+        at indexPath: IndexPath
+    ) -> UICollectionViewLayoutAttributes? {
+
+        let attributes = super.layoutAttributesForSupplementaryView(
+            ofKind: elementKind,
+            at: indexPath
+        )
+
+        return attributes
+    }
     
     // MARK: - 👷 Private layout helpers
     
     /// Sets the frame for the passed layout attributes object by calling the `layoutAttributesForItem(at:)` function.
-    private func setFrame(forLayoutAttributes layoutAttributes: UICollectionViewLayoutAttributes) {
+    private func setFrame(
+        forLayoutAttributes layoutAttributes: UICollectionViewLayoutAttributes
+    ) {
+
         if layoutAttributes.representedElementCategory == .cell { // Do not modify header views etc.
+
             let indexPath = layoutAttributes.indexPath
-            if let newFrame = layoutAttributesForItem(at: indexPath)?.frame {
+
+            if let newFrame = layoutAttributesForItem(
+                at: indexPath
+            )?.frame {
+
+                layoutAttributes.frame = newFrame
+            }
+        }
+
+        if layoutAttributes.representedElementKind == UICollectionView.elementKindSectionHeader {
+
+            let indexPath = layoutAttributes.indexPath
+
+            if let newFrame = layoutAttributesForSupplementaryView(
+                ofKind: UICollectionView.elementKindSectionHeader,
+                at: indexPath
+            )?.frame {
+
                 layoutAttributes.frame = newFrame
             }
         }
@@ -263,16 +296,28 @@ open class AlignedCollectionViewFlowLayout: UICollectionViewFlowLayout {
     ///   - secondItemAttributes: The second layout attributes object to be compared.
     /// - Returns: `true` if the frames of the two layout attributes are in the same line, else `false`.
     ///            `false` is also returned when the layout's `collectionView` property is `nil`.
-    fileprivate func isFrame(for firstItemAttributes: UICollectionViewLayoutAttributes, inSameLineAsFrameFor secondItemAttributes: UICollectionViewLayoutAttributes) -> Bool {
-        guard let lineWidth = contentWidth else {
+    fileprivate func isFrame(
+        for firstItemAttributes: UICollectionViewLayoutAttributes,
+        inSameLineAsFrameFor secondItemAttributes: UICollectionViewLayoutAttributes
+    ) -> Bool {
+
+        guard let lineWidth = contentWidth 
+        else
+        {
             return false
         }
         let firstItemFrame = firstItemAttributes.frame
-        let lineFrame = CGRect(x: sectionInset.left,
-                               y: firstItemFrame.origin.y,
-                               width: lineWidth,
-                               height: firstItemFrame.size.height)
-        return lineFrame.intersects(secondItemAttributes.frame)
+
+        let lineFrame = CGRect(
+            x: sectionInset.left,
+            y: firstItemFrame.origin.y,
+            width: lineWidth,
+            height: firstItemFrame.size.height
+        )
+
+        return lineFrame.intersects(
+            secondItemAttributes.frame
+        )
     }
     
     /// Determines the layout attributes objects for all items displayed in the same line as the item
@@ -296,24 +341,52 @@ open class AlignedCollectionViewFlowLayout: UICollectionViewFlowLayout {
     /// - Parameter layoutAttributes: The layout attributes objects to be vertically aligned.
     /// - Returns: The axis with respect to which the layout attributes can be aligned
     ///            or `nil` if the `layoutAttributes` array is empty.
-    private func verticalAlignmentAxisForLine(with layoutAttributes: [UICollectionViewLayoutAttributes]) -> AlignmentAxis<VerticalAlignment>? {
-        
-        guard let firstAttribute = layoutAttributes.first else {
+private func verticalAlignmentAxisForLine(
+        with layoutAttributes: [UICollectionViewLayoutAttributes]
+    ) -> AlignmentAxis<VerticalAlignment>? {
+
+        let cellAttributes = layoutAttributes.filter {
+
+            return $0.representedElementCategory == .cell
+        }
+
+        guard let firstAttribute = cellAttributes.first
+        else {
+
             return nil
         }
-        
+
+        let indexPath = firstAttribute.indexPath
+
         switch verticalAlignment {
+
         case .top:
-            let minY = layoutAttributes.reduce(CGFloat.greatestFiniteMagnitude) { min($0, $1.frame.minY) }
-            return AlignmentAxis(alignment: .top, position: minY)
-            
+            let minY = cellAttributes.reduce(CGFloat.greatestFiniteMagnitude) {
+                min($0, $1.frame.minY)
+            }
+
+            return AlignmentAxis(
+                alignment: .top,
+                position: minY
+            )
+
         case .bottom:
-            let maxY = layoutAttributes.reduce(0) { max($0, $1.frame.maxY) }
-            return AlignmentAxis(alignment: .bottom, position: maxY)
-            
+            let maxY = cellAttributes.reduce(0) {
+                max($0, $1.frame.maxY)
+            }
+
+            return AlignmentAxis(
+                alignment: .bottom,
+                position: maxY
+            )
+
         default:
             let centerY = firstAttribute.center.y
-            return AlignmentAxis(alignment: .center, position: centerY)
+
+            return AlignmentAxis(
+                alignment: .center,
+                position: centerY
+            )
         }
     }
     
